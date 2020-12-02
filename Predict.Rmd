@@ -1,0 +1,70 @@
+---
+title: "Predict Diabetes Using Random Forest"
+author: "Mahin Anwar"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
+
+```{r}
+#Load Libraries
+library(neuralnet)
+library(tidyverse)
+library(caret)
+library(mlbench)
+library(e1071)
+```
+```{r}
+#Load Dataset
+data("PimaIndiansDiabetes")
+df <- PimaIndiansDiabetes
+```
+
+```{r}
+#Exploratory Analysis
+str(df)
+g <- ggplot(df, aes(diabetes, fill = factor(diabetes)))
+g + geom_bar()
+
+df$binary <- ifelse(df$diabetes == 'neg', 0,1)
+str(df)
+```
+
+```{r}
+#Data Partition
+
+rows <- createDataPartition(df$binary, times = 1, p=0.7, list = FALSE)
+train <- df[rows,]
+test <- df[-rows,]
+train <- train[,-9]
+test <- test[,-9]
+
+dim(train)
+dim(test)
+
+```
+
+```{r}
+#Creating Model
+
+model <- train(as.factor(binary) ~ . ,
+               data = train,
+               method = 'ranger',
+               trControl = trainControl(method = 'repeatedcv', number = 2,
+                                        repeats = 2)
+               )
+model
+
+```
+```{r}
+#Predict Using Train & Test Set
+predict_train <- predict(model, train)
+predict_test <- predict(model, test)
+
+predict_train
+
+#Create Confusion Matrix
+confusionMatrix(predict_train, as.factor(train$binary))
+confusionMatrix(predict_test, as.factor(test$binary))
+```
